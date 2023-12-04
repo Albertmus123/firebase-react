@@ -9,38 +9,46 @@ import {
   InputRightElement,
   VStack,
   Text,
-  HStack,
-  Box,
+  Spinner,
 } from "@chakra-ui/react";
 import React, { useState } from "react";
 import { EyeCustomSvg } from "../svgs/EyeCustomSvg";
 import { auth } from "../config/firebase";
-import {
-  createUserWithEmailAndPassword,
-  signInWithPopup,
-  signOut,
-} from "firebase/auth";
-import { GoogleCustomSvg } from "../svgs/GoogleCustomSvg";
-import { googleProvider } from "../config/firebase";
+import {} from "firebase/auth";
+import { useDispatch, useSelector } from "react-redux";
+import { haveToken } from "../features/Auth/AuthSlice";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { useNavigate } from "react-router-dom";
 
 export const Auth = () => {
+  const dispatch = useDispatch();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [haveAccount, setHaveAccount] = useState(true);
+  const navigate = useNavigate();
 
   const signIn = async () => {
-    if (!email || !password) {
-      console.log("invalid email or password");
-    }
-    await createUserWithEmailAndPassword(auth, email, password);
-    setEmail("");
-    setPassword("");
+    setLoading(true);
+    signInWithEmailAndPassword(auth, email, password)
+      .then((userCredential) => {
+        const user = userCredential.user;
+        dispatch(haveToken());
+        console.log(user);
+        setLoading(false);
+        navigate("/");
+      })
+      .catch((error) => {
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        console.log(errorMessage);
+        console.log(errorCode);
+        setError(true);
+        setLoading(false);
+      });
   };
-  const signInWithGoogle = async () => {
-    await signInWithPopup(auth, googleProvider);
-  };
-  const logout = async () => {
-    await signOut(auth);
-  };
+
   return (
     <Container maxW={"100%"}>
       <Flex justifyContent={"center"} alignItems={"center"} minH={"100vh"}>
@@ -50,19 +58,32 @@ export const Auth = () => {
           w={{ base: "100%", md: "50%", lg: "30%" }}
         >
           <Text
-            letterSpacing={"5px"}
+            letterSpacing={"3px"}
             fontSize={"30px"}
             fontWeight={"bold"}
             py={"30px"}
           >
             Login To TeenIG
           </Text>
+          {error && (
+            <Text
+              letterSpacing={"2px"}
+              color={"red.300"}
+              fontSize={"15px"}
+              py={"12px"}
+            >
+              Invalid Email or Password !
+            </Text>
+          )}
+
           <FormControl id="email" isRequired>
-            <FormLabel letterSpacing={"3px"}>Email</FormLabel>
+            <FormLabel letterSpacing={"3px"} fontSize={"12px"}>
+              Email
+            </FormLabel>
             <InputGroup>
               <Input
                 _focus={{ border: "0.1rem solid yellow" }}
-                rounded={0}
+                rounded={"12px"}
                 color={"yellow.100"}
                 fontSize={"14px"}
                 letterSpacing={"2px"}
@@ -71,47 +92,88 @@ export const Auth = () => {
                 placeholder="exampe@example.com"
                 type="email"
                 name="email"
-                aria-label="Email"
               />
             </InputGroup>
           </FormControl>
           <FormControl id="password" isRequired>
-            <FormLabel letterSpacing={"3px"}>Password</FormLabel>
+            <FormLabel letterSpacing={"3px"} fontSize={"12px"}>
+              Password
+            </FormLabel>
             <InputGroup>
               <Input
+                _focus={{ border: "0.1rem solid yellow" }}
+                rounded={"12px"}
+                color={"yellow.100"}
+                fontSize={"14px"}
+                letterSpacing={"2px"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
                 type="password"
                 name="password"
-                aria-label="Password"
               />
               <InputRightElement px={"5px"}>
                 <EyeCustomSvg />
               </InputRightElement>
             </InputGroup>
           </FormControl>
+          {!haveAccount && (
+            <FormControl id="ConfirmPassword" isRequired>
+              <FormLabel letterSpacing={"3px"} fontSize={"12px"}>
+                Confirm Password
+              </FormLabel>
+              <InputGroup>
+                <Input
+                  _focus={{ border: "0.1rem solid yellow" }}
+                  rounded={"12px"}
+                  color={"yellow.100"}
+                  fontSize={"14px"}
+                  letterSpacing={"2px"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Confirm Password"
+                  type="password"
+                  name="ConfirmPassword"
+                />
+                <InputRightElement px={"5px"}>
+                  <EyeCustomSvg />
+                </InputRightElement>
+              </InputGroup>
+            </FormControl>
+          )}
           <Button onClick={signIn} letterSpacing={"3px"} w={"full"}>
-            Sign In
+            {!loading ? "Go On!" : <Spinner size="xs" />}
           </Button>
-          <Box>
-            <HStack
-              border={"1px solid "}
-              borderColor={"gray.700"}
-              px={"40px"}
-              py={"8px"}
-              _hover={{
-                borderColor: "yellow.100",
-              }}
-              cursor={"pointer"}
-              onClick={signInWithGoogle}
-            >
-              <GoogleCustomSvg />
-              <Text fontWeight={"bold"} letterSpacing={"2px"}>
-                oogle Account ?
+          <Text
+            letterSpacing={"3px"}
+            fontSize={"13px"}
+            fontWeight={"bold"}
+            py={"12px"}
+          >
+            {haveAccount
+              ? "Don't have an Account ? "
+              : "Already have an Account ?"}
+
+            {!haveAccount ? (
+              <Text
+                as={"span"}
+                cursor={"pointer"}
+                color={"yellow.600"}
+                onClick={() => setHaveAccount(!haveAccount)}
+              >
+                Log in
               </Text>
-            </HStack>
-          </Box>
+            ) : (
+              <Text
+                as={"span"}
+                cursor={"pointer"}
+                color={"yellow.600"}
+                onClick={() => setHaveAccount(!haveAccount)}
+              >
+                Sign Up
+              </Text>
+            )}
+          </Text>
         </VStack>
       </Flex>
     </Container>
