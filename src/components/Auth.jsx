@@ -12,10 +12,10 @@ import {
   Spinner,
 } from "@chakra-ui/react";
 import React, { useState } from "react";
-import { EyeCustomSvg } from "../svgs/EyeCustomSvg";
+import { EyeCloseCustomSvg } from "../svgs/EyeCloseCustomSvg";
 import { auth } from "../config/firebase";
 import {} from "firebase/auth";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { haveToken } from "../features/Auth/AuthSlice";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
@@ -27,10 +27,16 @@ export const Auth = () => {
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
   const [haveAccount, setHaveAccount] = useState(true);
+  const [fieldValidate, setFieldValidate] = useState(false);
   const navigate = useNavigate();
 
   const signIn = async () => {
     setLoading(true);
+    if (!email || !password) {
+      setFieldValidate(true);
+      setLoading(false);
+      return;
+    }
     signInWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
         const user = userCredential.user;
@@ -51,20 +57,35 @@ export const Auth = () => {
 
   return (
     <Container maxW={"100%"}>
-      <Flex justifyContent={"center"} alignItems={"center"} minH={"100vh"}>
+      <Flex
+        direction={"column"}
+        justifyContent={"center"}
+        alignItems={"center"}
+        minH={"100vh"}
+      >
         <VStack
           spacing={"20px"}
           padding={"12px"}
           w={{ base: "100%", md: "50%", lg: "30%" }}
         >
           <Text
-            letterSpacing={"3px"}
-            fontSize={"30px"}
+            fontSize={{ base: "30px", md: "60px" }}
             fontWeight={"bold"}
+            fontFamily={"Dancing Script, cursive"}
             py={"30px"}
           >
-            Login To TeenIG
+            TradiGram
           </Text>
+          {fieldValidate && (
+            <Text
+              letterSpacing={"2px"}
+              color={"red.300"}
+              fontSize={"15px"}
+              py={"12px"}
+            >
+              Both Email and Password are required !
+            </Text>
+          )}
           {error && (
             <Text
               letterSpacing={"2px"}
@@ -77,7 +98,7 @@ export const Auth = () => {
           )}
 
           <FormControl id="email" isRequired>
-            <FormLabel letterSpacing={"3px"} fontSize={"12px"}>
+            <FormLabel letterSpacing={"2px"} fontSize={"17px"}>
               Email
             </FormLabel>
             <InputGroup>
@@ -96,7 +117,7 @@ export const Auth = () => {
             </InputGroup>
           </FormControl>
           <FormControl id="password" isRequired>
-            <FormLabel letterSpacing={"3px"} fontSize={"12px"}>
+            <FormLabel letterSpacing={"2px"} fontSize={"17px"}>
               Password
             </FormLabel>
             <InputGroup>
@@ -113,13 +134,13 @@ export const Auth = () => {
                 name="password"
               />
               <InputRightElement px={"5px"}>
-                <EyeCustomSvg />
+                <EyeCloseCustomSvg />
               </InputRightElement>
             </InputGroup>
           </FormControl>
           {!haveAccount && (
             <FormControl id="ConfirmPassword" isRequired>
-              <FormLabel letterSpacing={"3px"} fontSize={"12px"}>
+              <FormLabel letterSpacing={"2px"} fontSize={"17px"}>
                 Confirm Password
               </FormLabel>
               <InputGroup>
@@ -136,17 +157,17 @@ export const Auth = () => {
                   name="ConfirmPassword"
                 />
                 <InputRightElement px={"5px"}>
-                  <EyeCustomSvg />
+                  <EyeCloseCustomSvg />
                 </InputRightElement>
               </InputGroup>
             </FormControl>
           )}
           <Button onClick={signIn} letterSpacing={"3px"} w={"full"}>
-            {!loading ? "Go On!" : <Spinner size="xs" />}
+            {!loading ? "Go On!" : <Spinner size="sm" />}
           </Button>
           <Text
-            letterSpacing={"3px"}
-            fontSize={"13px"}
+            letterSpacing={"2px"}
+            fontSize={"15px"}
             fontWeight={"bold"}
             py={"12px"}
           >
@@ -175,6 +196,19 @@ export const Auth = () => {
             )}
           </Text>
         </VStack>
+        <Flex
+          pt={"10px"}
+          gap={"40px"}
+          fontSize={"17px"}
+          letterSpacing={"2px"}
+          color={"yellow.600"}
+          wrap={"wrap"}
+          alignItems={"center"}
+        >
+          <Text>{/* <LicenseCustomSvg /> */}Licensed</Text>
+          <Text>Fashionists</Text>
+          <Text>Outfits</Text>
+        </Flex>
       </Flex>
     </Container>
   );
