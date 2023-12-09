@@ -7,7 +7,10 @@ import { ReelCustomSvg } from "../svgs/ReelCustomSvg";
 import { MessageCustomSvg } from "../svgs/MessageCustomSvg";
 import { HeartCustomSvg } from "../svgs/HeartCustomSvg";
 import { LogoutCustomSvg } from "../svgs/LogoutCustomSvg";
+import { useSelector } from "react-redux";
+
 export const SideBar = ({ logout }) => {
+  const user = useSelector((state) => state.user);
   return (
     <Flex
       direction={"column"}
@@ -69,6 +72,7 @@ export const SideBar = ({ logout }) => {
           Messages
         </Text>
       </HStack>
+
       <Spacer />
       <HStack pb={"30px"} onClick={() => logout()}>
         <LogoutCustomSvg />

@@ -10,25 +10,58 @@ import {
   VStack,
   Text,
   Spinner,
+  Alert,
+  AlertIcon,
 } from "@chakra-ui/react";
-import React, { useState } from "react";
+import { useState } from "react";
 import { EyeCloseCustomSvg } from "../svgs/EyeCloseCustomSvg";
 import { auth } from "../config/firebase";
-import {} from "firebase/auth";
 import { useDispatch } from "react-redux";
-import { haveToken } from "../features/Auth/AuthSlice";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+} from "firebase/auth";
 import { useNavigate } from "react-router-dom";
+import { addUser } from "../features/Auth/UserSlice";
 
 export const Auth = () => {
   const dispatch = useDispatch();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
   const [haveAccount, setHaveAccount] = useState(true);
   const [fieldValidate, setFieldValidate] = useState(false);
+  const [passwordValidate, setPasswordValidate] = useState(false);
+  const [createAccountError, setCreateAccountError] = useState(false);
   const navigate = useNavigate();
+
+  const signUp = async () => {
+    if (!email || !password || !confirmPassword) {
+      setFieldValidate(true);
+      setLoading(false);
+      return;
+    }
+    if (password !== confirmPassword) {
+      setPasswordValidate(true);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+
+    createUserWithEmailAndPassword(auth, email, password)
+      .then(() => {
+        setHaveAccount(true);
+        setLoading(false);
+      })
+      .catch((error) => {
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        errorCode == "auth/email-already-in-use" && setCreateAccountError(true);
+        setLoading(false);
+      });
+  };
 
   const signIn = async () => {
     setLoading(true);
@@ -40,8 +73,11 @@ export const Auth = () => {
     signInWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
         const user = userCredential.user;
-        dispatch(haveToken());
-        console.log(user);
+        dispatch(addUser(user.accessToken));
+        localStorage.setItem(
+          "userAccessToken",
+          JSON.stringify(user.accessToken)
+        );
         setLoading(false);
         navigate("/");
       })
@@ -86,6 +122,41 @@ export const Auth = () => {
               Both Email and Password are required !
             </Text>
           )}
+
+          {
+            (createAccountError ? (
+              <Text
+                letterSpacing={"2px"}
+                color={"red.300"}
+                fontSize={"15px"}
+                py={"12px"}
+              >
+                Account already Exists!
+              </Text>
+            ) : (
+              setTimeout(() => {
+                return (
+                  <Alert status="success">
+                    <AlertIcon />
+                    Your account has been created Successfully !{" "}
+                  </Alert>
+                );
+              })
+            ),
+            1000)
+          }
+
+          {passwordValidate && (
+            <Text
+              letterSpacing={"2px"}
+              color={"red.300"}
+              fontSize={"15px"}
+              py={"12px"}
+            >
+              Password and ConfirmPassword mismatch !
+            </Text>
+          )}
+
           {error && (
             <Text
               letterSpacing={"2px"}
@@ -112,6 +183,7 @@ export const Auth = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="exampe@example.com"
                 type="email"
+                id="email"
                 name="email"
               />
             </InputGroup>
@@ -131,6 +203,7 @@ export const Auth = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
                 type="password"
+                id="password"
                 name="password"
               />
               <InputRightElement px={"5px"}>
@@ -150,11 +223,13 @@ export const Auth = () => {
                   color={"yellow.100"}
                   fontSize={"14px"}
                   letterSpacing={"2px"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Confirm Password"
                   type="password"
+                  id="Confirm Password"
                   name="ConfirmPassword"
+                  autoComplete="off"
                 />
                 <InputRightElement px={"5px"}>
                   <EyeCloseCustomSvg />
@@ -162,9 +237,17 @@ export const Auth = () => {
               </InputGroup>
             </FormControl>
           )}
-          <Button onClick={signIn} letterSpacing={"3px"} w={"full"}>
-            {!loading ? "Go On!" : <Spinner size="sm" />}
-          </Button>
+
+          {haveAccount ? (
+            <Button onClick={signIn} letterSpacing={"3px"} w={"full"}>
+              {!loading ? "Go On!" : <Spinner size="sm" />}
+            </Button>
+          ) : (
+            <Button onClick={signUp} letterSpacing={"3px"} w={"full"}>
+              {!loading ? "Sign Up" : <Spinner size="sm" />}
+            </Button>
+          )}
+
           <Text
             letterSpacing={"2px"}
             fontSize={"15px"}
